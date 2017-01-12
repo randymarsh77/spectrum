@@ -8,8 +8,15 @@ public struct Shaping
 	// include lowest and highest frequency in spectrum
 	public var criticalPoints: [Int]
 
-	// an array of criticalPoints.count - 2 values that sum to 1 indicating the percentage granularity of each subrange
+	// an array of criticalPoints.count - 1 values that sum to 1 indicating the percentage granularity of each subrange
 	public var weights: [Float]
+
+	init(criticalPoints: [Int], weights: [Float]) {
+		assert(criticalPoints.count == weights.count + 1)
+		assert(weights.reduce(0) { (acc, v) in acc + v } - 1.0 < 0.000001)
+		self.criticalPoints = criticalPoints
+		self.weights = weights
+	}
 
 	public static var Default: Shaping = Shaping(criticalPoints: [ 0, 100, 300, 1000, 3000, 10000, 20000, 22100 ], weights: [ 0.04, 0.05, 0.25, 0.5, 0.1, 0.05, 0.01 ])
 }
@@ -22,12 +29,19 @@ public struct Windowing
 	public static var Default: Windowing = Windowing(size: 4096, overlapAdvancement: 1764)
 }
 
+public enum ScalingStrategy
+{
+	case StaticMax(Float)
+	case Adaptive(Float)
+}
+
 public struct OutputOptions
 {
 	public var valueCount: Int
 	public var decay: Float
+	public var scaling: ScalingStrategy
 
-	public static var Default: OutputOptions = OutputOptions(valueCount: 32, decay: 0.99)
+	public static var Default: OutputOptions = OutputOptions(valueCount: 128, decay: 0.90, scaling: .StaticMax(200))
 }
 
 public typealias FrequencyRange = (Float, Float)
@@ -55,7 +69,7 @@ public extension IReadableStream where Self.ChunkType == StereoChannel16BitPCMAu
 			.map(ApplyHanningWindow)
 			.map(fft)
 			.map(shape)
-			.map { ScaleAndTail(frequencyValues: $0, &to.previousMagnitudes, to.outputOptions.decay) }
+			.map { (v: [FrequencyDomainValue]) in ApplyScaleAndDecay(frequencyValues: v, &to.previousMagnitudes, to.outputOptions) }
 	}
 }
 
@@ -90,13 +104,11 @@ internal func CreateShapingData(_ shaping: Shaping, _ bins: Int, _ points: Int) 
 	var lastFrequency = currentBaseFrequency
 	for (i, weight) in shaping.weights.enumerated() {
 		let nextBaseFrequency = shaping.criticalPoints[i+1]
-		let numBins = i == shaping.criticalPoints.count - 1 ?
-			bins - currentBin :
-			Int(floor(Float(bins) * weight))
-		let numPoints = floor(Double(nextBaseFrequency - currentBaseFrequency) / pointFrequencyValue)
-		let pointDist = Int(floor(numPoints / Double(numBins)))
+		let numBins = Int(max(1, round(Float(bins+1) * weight)))
+		let numPoints = ceil(Double(nextBaseFrequency - currentBaseFrequency) / pointFrequencyValue)
+		let pointDist = Int(ceil(numPoints / Double(numBins)))
 		let freqDist = (nextBaseFrequency - currentBaseFrequency) / numBins
-		for j in 0...numBins-1 {
+		for j in 1...numBins {
 			domain.append((Float(lastFrequency), Float(currentBaseFrequency + (j * freqDist))))
 			shapingData.append(currentPoint + pointDist)
 			currentPoint = currentPoint + pointDist
@@ -105,6 +117,7 @@ internal func CreateShapingData(_ shaping: Shaping, _ bins: Int, _ points: Int) 
 		currentBaseFrequency = nextBaseFrequency
 		currentBin = currentBin + numBins
 	}
+	assert(domain.count == bins)
 	return (shapingData, domain)
 }
 
@@ -115,7 +128,7 @@ internal func Shape(_ frequencyValues: [Float], _ shapingData: ShapingData, _ do
 	var nextBoundary = boundaryIterator.next()!
 	for (i, point) in frequencyValues.enumerated() {
 		if (i == nextBoundary) {
-			reduced.append(FrequencyDomainValue(magnitude: current, range: domain[i]))
+			reduced.append(FrequencyDomainValue(magnitude: current, range: domain[shapingData.index(of: nextBoundary)!]))
 			current = 0
 			nextBoundary = boundaryIterator.next() ?? 100000
 		}
@@ -143,10 +156,19 @@ internal func ApplyHanningWindow(_ samples: inout [Float]) {
 	vDSP_hann_window(&samples, UInt(samples.count), Int32(vDSP_HALF_WINDOW))
 }
 
-internal func ScaleAndTail(frequencyValues: [FrequencyDomainValue], _ previousMagnitudes: inout [Float], _ decayFactor: Float) -> [FrequencyDomainValue] {
+internal func ApplyScaleAndDecay(frequencyValues: [FrequencyDomainValue], _ previousMagnitudes: inout [Float], _ options: OutputOptions) -> [FrequencyDomainValue] {
 	return frequencyValues.enumerated().map { (i, value) in
-		let scaled = log(1 + min(1, value.magnitude / 1000)) / log(2)
-		previousMagnitudes[i] = max(scaled, previousMagnitudes[i] * decayFactor)
+		let scaled = Scale(value: value.magnitude, using: options.scaling)
+		previousMagnitudes[i] = max(scaled, previousMagnitudes[i] * options.decay)
 		return FrequencyDomainValue(magnitude: previousMagnitudes[i], range: value.range)
+	}
+}
+
+internal func Scale(value: Float, using: ScalingStrategy)-> Float {
+	switch using {
+	case .StaticMax(let max):
+		return log(1 + min(1, value / max)) / log(2)
+	case .Adaptive(let lifetime):
+		return log(1 + min(1, value / lifetime)) / log(2)
 	}
 }
