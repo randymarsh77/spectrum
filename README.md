@@ -39,7 +39,7 @@ public class View : NSView
 {
 	public var input: WriteableStream<[FrequencyDomainValue]>
 
-	var stream: Streams.Stream<[FrequencyDomainValue]>
+	var stream: Stream<[FrequencyDomainValue]>
 	var points: [FrequencyDomainValue] = []
 
 	override init(frame frameRect: NSRect) {
