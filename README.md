@@ -43,7 +43,7 @@ public class View : NSView
 	var points: [FrequencyDomainValue] = []
 
 	override init(frame frameRect: NSRect) {
-		stream = Streams.Stream<[FrequencyDomainValue]>()
+		stream = Stream<[FrequencyDomainValue]>()
 		input = WriteableStream(stream)
 
 		super.init(frame: frameRect)
@@ -59,7 +59,7 @@ public class View : NSView
 			return
 		}
 
-		let width = floor(self.bounds.width / CGFloat(128))
+		let width = floor(self.bounds.width / CGFloat(points.count))
 
 		for (i, point) in points.enumerated() {
 			let rect = NSRect(x: CGFloat(i) * (width + 1), y: 0.0, width: width, height: CGFloat(point.magnitude) * self.bounds.height)
