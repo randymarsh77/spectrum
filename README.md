@@ -1,6 +1,12 @@
 # Spectrum
 Audio samples in. Frequency domain out.
 
+[![license](https://img.shields.io/github/license/mashape/apistatus.svg)]()
+[![GitHub release](https://img.shields.io/github/release/randymarsh77/spectrum.svg)]()
+[![SPM](https://img.shields.io/badge/SPM-compatible-brightgreen.svg)](https://github.com/apple/swift-package-manager)
+[![Build Status](https://api.travis-ci.org/randymarsh77/spectrum.svg?branch=master)](https://travis-ci.org/randymarsh77/spectrum)
+[![codebeat badge](https://codebeat.co/badges/6e4b6f25-7372-4ae1-b975-ab814be4ff0b)](https://codebeat.co/projects/github-com-randymarsh77-spectrum-master)
+
 # Usage
 
 Spectrum defines an extension method, `spectralize` that performs a stream transform from `IReadableStream<StereoChannel16BitPCMAudioData>` to `ReadableStream<[FrequencyDomainValue]>`. `StereoChannel16BitPCMAudioData` is a simple typealias for `Data`, but the bytes are assumed to be in the typed format.
