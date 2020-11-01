@@ -57,7 +57,7 @@ public typealias StereoChannel16BitPCMAudioData = Data
 
 public extension IReadableStream where Self.ChunkType == StereoChannel16BitPCMAudioData
 {
-	public func spectralize(to: Spectrum) -> ReadableStream<[FrequencyDomainValue]> {
+	func spectralize(to: Spectrum) -> ReadableStream<[FrequencyDomainValue]> {
 		let shape: OneToOneMapping<[Float], [FrequencyDomainValue]> = { data in
 			return Shape(data, to.shapingData, to.frequencyDomain)
 		}
@@ -128,7 +128,7 @@ internal func Shape(_ frequencyValues: [Float], _ shapingData: ShapingData, _ do
 	var nextBoundary = boundaryIterator.next()!
 	for (i, point) in frequencyValues.enumerated() {
 		if (i == nextBoundary) {
-			reduced.append(FrequencyDomainValue(magnitude: current, range: domain[shapingData.index(of: nextBoundary)!]))
+			reduced.append(FrequencyDomainValue(magnitude: current, range: domain[shapingData.firstIndex(of: nextBoundary)!]))
 			current = 0
 			nextBoundary = boundaryIterator.next() ?? 100000
 		}
@@ -139,12 +139,11 @@ internal func Shape(_ frequencyValues: [Float], _ shapingData: ShapingData, _ do
 
 internal func ConvertToMonoChannelAudioChunks(_ data: StereoChannel16BitPCMAudioData) -> [Float] {
 	let count = data.count / 2
-	let floats = data.withUnsafeBytes { (bits: UnsafePointer<Int16>) -> [Float] in
-		let buffer = UnsafeBufferPointer(start: bits, count: count);
+	let floats = data.withUnsafeBytes { (bits: UnsafeRawBufferPointer) -> [Float] in
 		var arr: [Float] = [Float]()
 		for i in 0...count - 1 {
 			if (i % 2 == 0) {
-				arr.append(abs(Float(buffer[i])))
+				arr.append(abs(Float(bits[i])))
 			}
 		}
 		return arr

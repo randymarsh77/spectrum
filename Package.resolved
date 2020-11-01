@@ -1,0 +1,43 @@
+{
+  "object": {
+    "pins": [
+      {
+        "package": "IDisposable",
+        "repositoryURL": "https://github.com/randymarsh77/idisposable",
+        "state": {
+          "branch": "master",
+          "revision": "9d2d4c032fdca4d0d81ec191bfcc71c91e88b178",
+          "version": null
+        }
+      },
+      {
+        "package": "Scope",
+        "repositoryURL": "https://github.com/randymarsh77/scope",
+        "state": {
+          "branch": "master",
+          "revision": "3c797592601ba184e0b3efec6f3c9fba125a000c",
+          "version": null
+        }
+      },
+      {
+        "package": "Streams",
+        "repositoryURL": "https://github.com/randymarsh77/streams",
+        "state": {
+          "branch": "master",
+          "revision": "28296bb955e0b5885315aac445933e5bf73166a6",
+          "version": null
+        }
+      },
+      {
+        "package": "Surge",
+        "repositoryURL": "https://github.com/Jounce/surge",
+        "state": {
+          "branch": "master",
+          "revision": "d4e2aa018744de4082543c7a86399ae3ee8534c2",
+          "version": null
+        }
+      }
+    ]
+  },
+  "version": 1
+}
