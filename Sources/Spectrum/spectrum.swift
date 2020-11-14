@@ -11,7 +11,7 @@ public struct Shaping
 	// an array of criticalPoints.count - 1 values that sum to 1 indicating the percentage granularity of each subrange
 	public var weights: [Float]
 
-	init(criticalPoints: [Int], weights: [Float]) {
+	public init(criticalPoints: [Int], weights: [Float]) {
 		assert(criticalPoints.count == weights.count + 1)
 		assert(weights.reduce(0) { (acc, v) in acc + v } - 1.0 < 0.000001)
 		self.criticalPoints = criticalPoints
@@ -25,6 +25,11 @@ public struct Windowing
 {
 	public var size: Int
 	public var overlapAdvancement: Int
+
+	public init(size: Int, overlapAdvancement: Int) {
+		self.size = size
+		self.overlapAdvancement = overlapAdvancement
+	}
 
 	public static var Default: Windowing = Windowing(size: 4096, overlapAdvancement: 1764)
 }
@@ -40,6 +45,12 @@ public struct OutputOptions
 	public var valueCount: Int
 	public var decay: Float
 	public var scaling: ScalingStrategy
+
+	public init(valueCount: Int, decay: Float, scaling: ScalingStrategy) {
+		self.valueCount = valueCount
+		self.decay = decay
+		self.scaling = scaling
+	}
 
 	public static var Default: OutputOptions = OutputOptions(valueCount: 128, decay: 0.90, scaling: .StaticMax(200))
 }
@@ -84,14 +95,15 @@ public class Spectrum
 		previousMagnitudes = [Float](repeating: 0.0, count: windowing.size)
 	}
 
-	internal let shapingData: ShapingData
-	internal let frequencyDomain: FrequencyDomain
-	internal let windowing: Windowing
-	internal let outputOptions: OutputOptions
+	public let shapingData: ShapingData
+	public let frequencyDomain: FrequencyDomain
+	public let windowing: Windowing
+	public let outputOptions: OutputOptions
+
 	internal var previousMagnitudes: [Float]
 }
 
-internal typealias ShapingData = [Int]
+public typealias ShapingData = [Int]
 
 internal func CreateShapingData(_ shaping: Shaping, _ bins: Int, _ points: Int) -> (ShapingData, FrequencyDomain) {
 	let maxFrequency = shaping.criticalPoints.last!
