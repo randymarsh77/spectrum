@@ -68,12 +68,12 @@ public typealias StereoChannel16BitPCMAudioData = Data
 
 public extension IReadableStream where Self.ChunkType == StereoChannel16BitPCMAudioData
 {
-	func spectralize(to: Spectrum) -> ReadableStream<[FrequencyDomainValue]> {
+	func spectralize(to: Spectrum) throws -> ReadableStream<[FrequencyDomainValue]> {
 		let shape: OneToOneMapping<[Float], [FrequencyDomainValue]> = { data in
 			return Shape(data, to.shapingData, to.frequencyDomain)
 		}
 
-		return self
+		return try self
 			.map(ConvertToMonoChannelAudioChunks)
 			.flatten()
 			.overlappingChunks(of: to.windowing.size, advancingBy: to.windowing.overlapAdvancement)
