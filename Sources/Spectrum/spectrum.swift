@@ -21,17 +21,52 @@ public struct Shaping
 	public static var Default: Shaping = Shaping(criticalPoints: [ 0, 100, 300, 1000, 3000, 10000, 20000, 22100 ], weights: [ 0.04, 0.05, 0.25, 0.5, 0.1, 0.05, 0.01 ])
 }
 
+public struct WindowingModeFlag: OptionSet {
+    public let rawValue: Int32
+
+    public static let None = WindowingModeFlag(rawValue: 0)
+	public static let HalfWindow = WindowingModeFlag(rawValue: Int32(vDSP_HALF_WINDOW))
+
+	public init(rawValue: Int32)
+	{
+		self.rawValue = rawValue
+	}
+}
+
+public struct HanningWindowingModeFlag: OptionSet {
+    public let rawValue: Int32
+
+    public static let None = HanningWindowingModeFlag(rawValue: 0)
+	public static let HalfWindow = HanningWindowingModeFlag(rawValue: Int32(vDSP_HALF_WINDOW))
+	public static let Norm = HanningWindowingModeFlag(rawValue: Int32(vDSP_HANN_NORM))
+	public static let Denorm = HanningWindowingModeFlag(rawValue: Int32(vDSP_HANN_DENORM))
+
+	public init(rawValue: Int32)
+	{
+		self.rawValue = rawValue
+	}
+}
+
+public enum WindowingMode
+{
+	case Hanning(HanningWindowingModeFlag)
+	case Blackman(WindowingModeFlag)
+	case Hamming(WindowingModeFlag)
+}
+
 public struct Windowing
 {
+	public var mode: WindowingMode
 	public var size: Int
 	public var overlapAdvancement: Int
 
-	public init(size: Int, overlapAdvancement: Int) {
+	public init(mode: WindowingMode, size: Int, overlapAdvancement: Int) {
+		self.mode = mode
 		self.size = size
 		self.overlapAdvancement = overlapAdvancement
 	}
 
-	public static var Default: Windowing = Windowing(size: 4096, overlapAdvancement: 1764)
+	public static var Default: Windowing = Windowing(mode: .Hanning([.HalfWindow]), size: 4096, overlapAdvancement: 1764)
 }
 
 public enum ScalingStrategy
@@ -77,7 +112,7 @@ public extension IReadableStream where Self.ChunkType == StereoChannel16BitPCMAu
 			.map(ConvertToMonoChannelAudioChunks)
 			.flatten()
 			.overlappingChunks(of: to.windowing.size, advancingBy: to.windowing.overlapAdvancement)
-			.map(ApplyHanningWindow)
+			.map { samples in ApplyWindow(to.windowing.mode, &samples) }
 			.map(fft)
 			.map(shape)
 			.map { (v: [FrequencyDomainValue]) in ApplyScaleAndDecay(frequencyValues: v, &to.previousMagnitudes, to.outputOptions) }
@@ -163,8 +198,15 @@ internal func ConvertToMonoChannelAudioChunks(_ data: StereoChannel16BitPCMAudio
 	return floats
 }
 
-internal func ApplyHanningWindow(_ samples: inout [Float]) {
-	vDSP_hann_window(&samples, UInt(samples.count), Int32(vDSP_HALF_WINDOW))
+internal func ApplyWindow(_ mode: WindowingMode, _ samples: inout [Float]) {
+	switch mode {
+	case .Hanning(let flag):
+		vDSP_hann_window(&samples, UInt(samples.count), flag.rawValue)
+	case .Blackman(let flag):
+		vDSP_blkman_window(&samples, UInt(samples.count), flag.rawValue)
+	case .Hamming(let flag):
+		vDSP_hamm_window(&samples, UInt(samples.count), flag.rawValue)
+	}
 }
 
 internal func ApplyScaleAndDecay(frequencyValues: [FrequencyDomainValue], _ previousMagnitudes: inout [Float], _ options: OutputOptions) -> [FrequencyDomainValue] {
