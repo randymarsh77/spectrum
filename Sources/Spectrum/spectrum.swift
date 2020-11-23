@@ -49,6 +49,7 @@ public struct HanningWindowingModeFlag: OptionSet {
 
 public enum WindowingMode
 {
+	case None
 	case Hanning(HanningWindowingModeFlag)
 	case Blackman(WindowingModeFlag)
 	case Hamming(WindowingModeFlag)
@@ -206,6 +207,8 @@ internal func ApplyWindow(_ mode: WindowingMode, _ samples: inout [Float]) {
 		vDSP_blkman_window(&samples, UInt(samples.count), flag.rawValue)
 	case .Hamming(let flag):
 		vDSP_hamm_window(&samples, UInt(samples.count), flag.rawValue)
+	case .None:
+		return
 	}
 }
 
