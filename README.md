@@ -1,10 +1,11 @@
 # Spectrum
+
 Audio samples in. Frequency domain out.
 
 [![license](https://img.shields.io/github/license/mashape/apistatus.svg)]()
 [![GitHub release](https://img.shields.io/github/release/randymarsh77/spectrum.svg)]()
 [![SPM](https://img.shields.io/badge/SPM-compatible-brightgreen.svg)](https://github.com/apple/swift-package-manager)
-[![Build Status](https://api.travis-ci.org/randymarsh77/spectrum.svg?branch=master)](https://travis-ci.org/randymarsh77/spectrum)
+[![Build](https://github.com/randymarsh77/spectrum/workflows/CI/badge.svg)](https://github.com/randymarsh77/spectrum/actions?query=workflow%3ACI)
 [![codebeat badge](https://codebeat.co/badges/6e4b6f25-7372-4ae1-b975-ab814be4ff0b)](https://codebeat.co/projects/github-com-randymarsh77-spectrum-master)
 
 # Usage
@@ -13,7 +14,7 @@ Spectrum defines an extension method, `spectralize` that performs a stream trans
 
 # Example
 
-The following example uses [Crystal](https://github.com/randymarsh77/crystal) to generate the input audio stream. Spectrum transforms that audio stream into a series of frequency domain snapshots. We define a view that renders some vertical bars and exposes an input stream for each frame that should be rendered (a frequency domain snapshot). 
+The following example uses [Crystal](https://github.com/randymarsh77/crystal) to generate the input audio stream. Spectrum transforms that audio stream into a series of frequency domain snapshots. We define a view that renders some vertical bars and exposes an input stream for each frame that should be rendered (a frequency domain snapshot).
 
 Given the view:
 

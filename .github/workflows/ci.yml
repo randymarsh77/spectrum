@@ -1,0 +1,21 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+    branches: ["*"]
+    tags-ignore: ["**"]
+
+jobs:
+  macos:
+    runs-on: macOS-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+
+      - name: Build
+        run: swift build
+
+      - name: Code Cov
+        if: github.ref == 'refs/heads/master'
+        run: bash <(curl -s https://codecov.io/bash)
