@@ -72,6 +72,7 @@ public struct Windowing
 
 public enum ScalingStrategy
 {
+	case None
 	case StaticMax(Float)
 	case Adaptive(Float)
 }
@@ -88,7 +89,7 @@ public struct OutputOptions
 		self.scaling = scaling
 	}
 
-	public static var Default: OutputOptions = OutputOptions(valueCount: 128, decay: 0.90, scaling: .StaticMax(200))
+	public static var Default: OutputOptions = OutputOptions(valueCount: 128, decay: 0.90, scaling: .None)
 }
 
 public typealias FrequencyRange = (Float, Float)
@@ -222,6 +223,8 @@ internal func ApplyScaleAndDecay(frequencyValues: [FrequencyDomainValue], _ prev
 
 internal func Scale(value: Float, using: ScalingStrategy)-> Float {
 	switch using {
+	case .None:
+		return value
 	case .StaticMax(let max):
 		return log(1 + min(1, value / max)) / log(2)
 	case .Adaptive(let lifetime):
