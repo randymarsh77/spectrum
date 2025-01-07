@@ -100,7 +100,7 @@ public struct FrequencyDomainValue: Sendable {
 @available(iOS 13.0, *)
 @available(macOS 10.15, *)
 extension AsyncStream where Self.Element == AudioData {
-	public func spectralize(to: Spectrum) throws -> AsyncStream<[FrequencyDomainValue]> {
+	public func spectralize(to: Spectrum) -> AsyncStream<[FrequencyDomainValue]> {
 		return AsyncStream<[FrequencyDomainValue]> { continuation in
 			Task {
 				let chunkAccumulator = OverlappingChunkAccumulator<Float>(
