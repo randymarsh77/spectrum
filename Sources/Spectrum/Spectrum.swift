@@ -97,6 +97,7 @@ public struct FrequencyDomainValue: Sendable {
 	public let range: FrequencyRange
 }
 
+@available(iOS 13.0, *)
 @available(macOS 10.15, *)
 extension AsyncStream where Self.Element == AudioData {
 	public func spectralize(to: Spectrum) throws -> AsyncStream<[FrequencyDomainValue]> {
