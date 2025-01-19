@@ -99,7 +99,7 @@ public struct FrequencyDomainValue: Sendable {
 
 @available(iOS 13.0, *)
 @available(macOS 10.15, *)
-extension AsyncStream where Self.Element == AudioData {
+extension AsyncSequence where Self.Element == AudioData, Self: Sendable {
 	public func spectralize(to: Spectrum) -> AsyncStream<[FrequencyDomainValue]> {
 		return AsyncStream<[FrequencyDomainValue]> { continuation in
 			Task {
@@ -110,7 +110,7 @@ extension AsyncStream where Self.Element == AudioData {
 					self
 					.map(ConvertToMonoChannelAudioChunks)
 					.compactMap { x in chunkAccumulator.accumulate(x) }
-				for await floatChunks in partiallyMapped {
+				for try await floatChunks in partiallyMapped {
 					for samples in floatChunks {
 						// TODO: Avoid array copy
 						var mutableSamples = samples
@@ -243,6 +243,10 @@ internal func ConvertToMonoChannelAudioChunks(_ audioData: AudioData) -> [Float]
 	let data = audioData.data
 	// TODO: Stop assuming this is StereoChannel16BitPCMAudioData
 	let count = data.count
+	if count == 0 {
+		return []
+	}
+
 	let floats = data.withUnsafeBytes { (bits: UnsafeRawBufferPointer) -> [Float] in
 		var arr: [Float] = [Float]()
 		for i in 0...count - 1 where i % 2 == 0 {
